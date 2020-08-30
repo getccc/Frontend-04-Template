@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>三子棋</title>
+  <style type="text/css">
+    #border {
+      display: flex;
+      flex-wrap: wrap;
+      width: 310px;
+    }
+
+    .grid {
+      width: 100px;
+      height: 100px;
+      border: 1px solid white;
+      background-color: green;
+      line-height: 100px;
+      text-align: center;
+      font-size: 50px;
+    }
+  </style>
+</head>
+
+
+<body>
+  <div id="border"></div>
+
+  <script type="text/javascript">
+    let parm = [
+      [0, 0, 0],
+      [0, 0, 0],
+      [0, 0, 0],
+    ]
+
+    let color = 1;
+
+    function show() {
+      let border = document.getElementById('border');
+      border.innerHTML = ''
+      parm.forEach((d1, i) => {
+        d1.forEach((d2, j) => {
+          let div = document.createElement('div');
+          div.classList.add('grid');
+          div.innerText = d2 === 1 ? '❌' : d2 === 2 ? '⭕️' : '';
+          div.addEventListener('click', () => userMove(i, j));
+          border.appendChild(div);
+        })
+      })
+    }
+
+    function userMove(i, j) {
+      if (parm[i][j]) {
+        return alert('不能在该位置落子！');
+      }
+      parm[i][j] = color;
+      if (check(parm, color)) {
+        alert(color == 2 ? '❌ is winner' : '⭕️ is winner')
+      }
+      color = 3 - color;
+      show();
+      computerMove();
+    }
+
+    function computerMove() {
+      let choice = bestChoice(parm, color)
+      if (choice.point)
+        parm[choice.point[0]][choice.point[1]] = color
+      if (check(parm, color)) {
+        alert(color == 1 ? '❌ is winner' : '⭕️ is winner')
+      }
+      color = 3 - color
+      show()
+    }
+
+    function check(parm, color) {
+      for (let i = 0; i < 3; i++) {
+        let win = true;
+        for (let j = 0; j < 3; j++) {
+          if (parm[i][j] != color) {
+            win = false;
+          }
+        }
+        if (win) return true;
+      }
+
+      for (let i = 0; i < 3; i++) {
+        let win = true;
+        for (let j = 0; j < 3; j++) {
+          if (parm[j][i] != color) {
+            win = false;
+          }
+        }
+        if (win) return true;
+      }
+
+      {
+        let win = true;
+        for (let i = 0; i < 3; i++) {
+          if (parm[i][i] != color) {
+            win = false;
+          }
+        }
+        if (win) return true;
+      }
+
+      {
+        let win = true;
+        for (let i = 0; i < 3; i++) {
+          if (parm[i][2 - i] != color) {
+            win = false;
+          }
+        }
+        if (win) return true;
+      }
+      return false
+    }
+
+    function clone(parm) {
+      return JSON.parse(JSON.stringify(parm));
+    }
+
+    function willWin(parm, color) {
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (parm[i][j] !== 0)
+            continue
+          let tmp = clone(parm)
+          tmp[i][j] = color
+          if (check(tmp, color)) {
+            return [i, j]
+          }
+        }
+      }
+      return null
+    }
+
+    function bestChoice(parm, color) {
+      let point = willWin(parm, color)
+      if (point) {
+        return {
+          point: point, // 位置
+          result: 1 // 代表要赢还是输 赢 1 输 -1 和 0
+        }
+      }
+      let result = -2
+      outer: for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          if (parm[i][j] !== 0)
+            continue
+          let tmp = clone(parm)
+          tmp[i][j] = color
+          let opp = bestChoice(tmp, 3 - color)
+          if (-opp.result >= result) { // 保证不输
+            point = [i, j]
+            result = -opp.result
+          }
+          if (result == 1) {// 胜负剪支
+            break outer
+          }
+        }
+      }
+      return {
+        point: point,
+        result: point ? result : 0
+      }
+    }
+
+    show();
+  </script>
+</body>
+
+</html>
